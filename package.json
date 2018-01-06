@@ -1,0 +1,10 @@
+{
+  "name": "smart-tickets",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ivan-Asen Chakarov <vankata9907@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "zeppelin-solidity": "^1.5.0"
+  }
+}
