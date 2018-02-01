@@ -40,7 +40,7 @@ contract SmartTicketsCore is Pausable {
         TicketStore storage ticketStore = ticketStores[_ticketId];
         // Check if ticketStore exists
         require(ticketStore.creator != address(0));
-        require(ticketStore.active);
+        require(ticketStore.status == EventStatus.NOT_PASSED);
         require(msg.value == ticketStore.price);
         require(ticketStore.currentSupply > 0);
 
