@@ -137,17 +137,38 @@ contract SmartTicketsCore is TicketsAccessControl {
         }
     }
 
-    function createTicket(
+    function createTicketStore(
         uint _initialSupply,
         uint _price,
+        string _name,
+        string _description,
         string _metaDescription,
         uint8 _status,
-        address _creator) public onlyAdmin returns(bool) {
+        address _creator) 
+        public 
+        onlyAdmin 
+        returns (bool) {
+        
+        if (_creator == address(0)) {
+            _creator = msg.sender;
+        }
+
+        TicketStore memory newTicket = TicketStore(
+            _initialSupply,
+            _initialSupply,
+            _price,
+            _name,
+            _description,
+            _creator,
+            _metaDescription,
+            EventStatus.NOT_PASSED);
+        
+        uint ticketId = ticketStores.push(newTicket) - 1;
+        ticketStoreIdToCreator[ticketId] = _creator;
         return true;
     }
 
-    function activateTicket() onlyAdmin {}
+    function activateTicket(uint _ticketId) onlyAdmin {}
 
-    function deactivateTicket() onlyAdmin {}
-    
+    function deactivateTicket(uint _ticketId) onlyAdmin {}    
 }
