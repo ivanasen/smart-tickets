@@ -1,6 +1,6 @@
 pragma solidity ^0.4.19;
 
-import "./Ownable.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract TicketTemplate is Ownable {
     string public eventName;
