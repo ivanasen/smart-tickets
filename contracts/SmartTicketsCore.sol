@@ -4,10 +4,28 @@ import "./SmartTicketsHelper.sol";
 
 contract SmartTicketsCore is SmartTicketsHelper {
     
+    uint constant MAX_TICKET_PRICE = 5 ether;
+    
+    event EventCreation(uint id, uint date, bytes metaDescriptionHash, address creator);
+    event EventCancelation(uint id);
+    
+    event TicketCreation(
+        uint ticketId,
+        uint eventId,
+        uint price,
+        uint supply,
+        uint startVendingTime,
+        uint endVendingTime,
+        bool refundable,
+        address creator
+    );
+    event TicketPurchase(uint ticketId, address buyer);
+    
+    event Withdrawal(uint to, uint amount);
+    
+    
     struct Ticket {
         uint eventId;
-        string title;
-        string ticketType;
         uint price;
         uint16 initialSupply;
         uint16 currentSupply;
@@ -17,7 +35,6 @@ contract SmartTicketsCore is SmartTicketsHelper {
     }
     
     struct Event {
-        string name;
         uint date;
         bytes metaDescriptionHash;
     }
@@ -27,16 +44,10 @@ contract SmartTicketsCore is SmartTicketsHelper {
     
     mapping (uint => address) eventIdToCreator;
     mapping (uint => address) ticketIdToCreator;
-    mapping (uint => address) ticketIdToOwner;
-    
-    mapping (address => mapping (uint => uint)) ownerToTicketId;
-    mapping (address => uint) ticketCountOfOwner;
-    mapping (address => uint) ticketCountOfCreator;
-    
-    mapping (address => uint) balanceOfCreator;
+    mapping (address => mapping (uint => uint)) ownerToTicket;
     
     modifier validOwnerOf(uint _ticketId) {
-        require(ticketIdToOwner[_ticketId] == msg.sender);
+        require(ownerToTicket[msg.sender][_ticketId] > 0);
         _;
     }
     
@@ -59,7 +70,7 @@ contract SmartTicketsCore is SmartTicketsHelper {
         admins[msg.sender] = 1;
     }
     
-    function buyTicket(uint _ticketId) public payable returns(uint) {
+    function buyTicket(uint _ticketId) public payable {
         Ticket storage ticket = tickets[_ticketId];
         
         require(ticketIdToCreator[_ticketId] != address(0));
@@ -70,48 +81,42 @@ contract SmartTicketsCore is SmartTicketsHelper {
         ticketIdToCreator[_ticketId].transfer(ticket.price);
         msg.sender.transfer(msg.value - ticket.price);
         ticket.currentSupply--;
-        ownerToTicketId[msg.sender][_ticketId]++;
-        ticketCountOfOwner[msg.sender]++;
+        ownerToTicket[msg.sender][_ticketId]++;
         
-        return ticketCountOfOwner[msg.sender];
+        TicketPurchase(_ticketId, msg.sender);
     }
     
     function createEvent(
-        string _name,
         uint _date,
         bytes _metaDescriptionHash
-    ) external returns (uint) {
-        require(bytes(_name).length > 4);
+    ) external {
         require(_date > now);
         
-        Event memory newEvent = Event(_name, _date, _metaDescriptionHash);
+        Event memory newEvent = Event(_date, _metaDescriptionHash);
         uint newEventId = events.push(newEvent) - 1;
-        
         eventIdToCreator[newEventId] = msg.sender;
         
-        return newEventId;
+        EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
     }
     
     function addTicketForEvent(
         uint _eventId,
-        string _title,
-        string _ticketType,
         uint _priceInEther,
         uint16 _initialSupply,
         uint _startVendingTime,
         uint _endVendingTime,
         bool _refundable
-    ) external returns (uint) {
-        require(bytes(events[_eventId].name).length > 0);
-        require(bytes(_title).length > 4);
+    )
+        external
+        validCreatorOfEvent(_eventId)
+    {
+        require(_priceInEther <= MAX_TICKET_PRICE);
         require(_initialSupply > 0);
         require(_startVendingTime > now);
         require(_endVendingTime > _startVendingTime);
         
         Ticket memory newTicket = Ticket(
             _eventId,
-            _title,
-            _ticketType,
             _priceInEther,
             _initialSupply,
             _initialSupply,
@@ -122,15 +127,17 @@ contract SmartTicketsCore is SmartTicketsHelper {
         
         uint newTicketId = tickets.push(newTicket) - 1;
         ticketIdToCreator[newTicketId] = msg.sender;
-        return newTicketId;
-    }
-    
-    function setEventName(uint _id, string _name)
-        external
-        validCreatorOfEvent(_id)
-    {
-        require(bytes(_name).length > 4);
-        events[_id].name = _name;
+        
+        TicketCreation(
+            newTicketId,
+            _eventId,
+            _priceInEther,
+            _initialSupply,
+            _startVendingTime,
+            _endVendingTime,
+            _refundable,
+            msg.sender
+        );
     }
     
     function setEventDate(uint _id, uint _date)
@@ -152,13 +159,12 @@ contract SmartTicketsCore is SmartTicketsHelper {
         external 
         view 
         returns(
-        string name,
         uint date,
         bytes metaDescriptionHash
     )
     {
         Event storage searchedEvent = events[_id];
-        name = searchedEvent.name;
+        
         date = searchedEvent.date;
         metaDescriptionHash = searchedEvent.metaDescriptionHash;
     }
@@ -168,8 +174,6 @@ contract SmartTicketsCore is SmartTicketsHelper {
         view
         returns(
         uint eventId,
-        string title,
-        string ticketType,
         uint price,
         uint16 initialSupply,
         uint16 currentSupply,
@@ -181,8 +185,6 @@ contract SmartTicketsCore is SmartTicketsHelper {
         Ticket storage ticket = tickets[_ticketId];
         
         eventId = ticket.eventId;
-        title = ticket.title;
-        ticketType = ticket.ticketType;
         price = ticket.price;
         initialSupply = ticket.initialSupply;
         currentSupply = ticket.currentSupply;
