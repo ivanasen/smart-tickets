@@ -2,24 +2,20 @@ pragma solidity ^0.4.20;
 
 import "./SmartTicketsHelper.sol";
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./FiatContract.sol";
 
 contract SmartTickets is SmartTicketsHelper {
     using SafeMath for uint;
     
-    uint constant MAX_TICKET_PRICE = 5 ether;
-    
     event EventCreation(uint id, uint date, bytes metaDescriptionHash, address creator);
     event EventCancelation(uint id);
     
-    event TicketCreation(
-        uint ticketId,
+    event TicketTypeCreation(
+        uint ticketTypeId,
         uint eventId,
         uint price,
         uint supply,
-        uint startVendingTime,
-        uint endVendingTime,
-        bool refundable,
-        address creator
+        bool refundable
     );
     event TicketPurchase(uint ticketId, address buyer);
     
@@ -27,7 +23,7 @@ contract SmartTickets is SmartTicketsHelper {
     
     struct TicketType {
         uint eventId;
-        uint price;
+        uint priceInUSDCents;
         uint initialSupply;
         uint currentSupply;
         bool refundable;
@@ -40,11 +36,17 @@ contract SmartTickets is SmartTicketsHelper {
         bool canceled;
     }
     
+    FiatContract public fiatContract;
+    address fiatContractAddress = 
+        0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
+    uint private FIAT_ETH_INDEX = 0;
+    
     uint private totalTickets;
 
     TicketType[] ticketTypes;
     Event[] events;
-    mapping(uint => uint) ticketToTicketType;
+    mapping (uint => uint[]) eventToTicketType;
+    mapping (uint => uint) ticketToTicketType;
     
     mapping (uint => address) eventIdToCreator;
     mapping (address => mapping (uint => uint)) ownerToTicket;
@@ -69,11 +71,22 @@ contract SmartTickets is SmartTicketsHelper {
         ceoAddress = msg.sender;
         cooAddress = msg.sender;
         cfoAddress = msg.sender;
-        admins[msg.sender] = 1;
+        eventOrganizers[msg.sender] = true;
+        
+        fiatContract = FiatContract(fiatContractAddress);
+    }
+    
+    function setFiatContractAddress(address _newAddress) external onlyCEO {
+        fiatContractAddress = _newAddress;
+        fiatContract = FiatContract(_newAddress);
     }
     
     function balanceOf(address _owner) public view returns (uint) {
         return ownedTickets[_owner].length;
+    }
+    
+    function getUsdCourse() public view returns (uint) {
+        return fiatContract.USD(0);
     }
     
     function buyTicket(uint _ticketTypeId) public payable {
@@ -85,10 +98,11 @@ contract SmartTickets is SmartTicketsHelper {
         require(events[ticketType.eventId].date > now);
         require(ticketType.currentSupply > 0);
         
-        require(msg.value == ticketType.price);
+        require(msg.value == 
+            ticketType.priceInUSDCents * fiatContract.USD(FIAT_ETH_INDEX));
         
         Event storage forEvent = events[ticketType.eventId];
-        forEvent.earnings.add(ticketType.price);
+        forEvent.earnings.add(ticketType.priceInUSDCents);
         
         ticketType.currentSupply = ticketType.currentSupply.sub(1);
         
@@ -108,7 +122,11 @@ contract SmartTickets is SmartTicketsHelper {
     function createEvent(uint _date, bytes _metaDescriptionHash) external {
         require(_date > now);
         
-        Event memory newEvent = Event(_date, _metaDescriptionHash, 0, false);
+        Event memory newEvent = Event(
+            _date,
+            _metaDescriptionHash,
+            0,
+            false);
         uint newEventId = events.push(newEvent) - 1;
         eventIdToCreator[newEventId] = msg.sender;
         
@@ -117,50 +135,47 @@ contract SmartTickets is SmartTicketsHelper {
     
     function addTicketForEvent(
         uint _eventId,
-        uint _priceInEther,
+        uint _priceInUSDCents,
         uint _initialSupply,
-        uint _startVendingTime,
-        uint _endVendingTime,
         bool _refundable
     )
         external
         validCreatorOfEvent(_eventId)
     {
-        require(_priceInEther <= MAX_TICKET_PRICE);
         require(_initialSupply > 0);
-        require(_startVendingTime > now);
-        require(_endVendingTime > _startVendingTime);
         
         TicketType memory ticketType = TicketType(
             _eventId,
-            _priceInEther,
+            _priceInUSDCents,
             _initialSupply,
             _initialSupply,
             _refundable
         );
         
         uint length = ticketTypes.push(ticketType);
-        uint ticketTypeId =  length.sub(1);
+        uint ticketTypeId =  length - 1;
         
-        TicketCreation(
+        eventToTicketType[_eventId].push(ticketTypeId);
+        
+        TicketTypeCreation(
             ticketTypeId,
             _eventId,
-            _priceInEther,
+            _priceInUSDCents,
             _initialSupply,
-            _startVendingTime,
-            _endVendingTime,
-            _refundable,
-            msg.sender
+            _refundable
         );
     }
     
     function refundTicket(uint _ticketId) external onlyOwnerOf(_ticketId) {
         TicketType storage ticketType = 
             ticketTypes[ticketToTicketType[_ticketId]];
-        Event storage cancelledEvent = events[ticketType.eventId];
+        Event storage forEvent = events[ticketType.eventId];
         
-        require(cancelledEvent.canceled || ticketType.refundable);
-        msg.sender.transfer(ticketType.price);
+        require(forEvent.canceled || ticketType.refundable);
+        
+        ticketType.currentSupply = ticketType.currentSupply.add(1);
+        forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
+        msg.sender.transfer(ticketType.priceInUSDCents * fiatContract.USD(0));
     }
     
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
@@ -226,25 +241,27 @@ contract SmartTickets is SmartTicketsHelper {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
         
         eventId = ticketType.eventId;
-        price = ticketType.price;
+        price = ticketType.priceInUSDCents;
         initialSupply = ticketType.initialSupply;
         currentSupply = ticketType.currentSupply;
         refundable = ticketType.refundable;
     }
     
-    function getEvent(uint _id) 
+    function getEvent(uint _eventId) 
         external 
         view 
         returns(
         uint date,
         bytes metaDescriptionHash,
-        bool canceled
+        bool canceled,
+        uint ticketTypeCount
     ) {
-        Event storage searchedEvent = events[_id];
+        Event storage searchedEvent = events[_eventId];
         
         date = searchedEvent.date;
         metaDescriptionHash = searchedEvent.metaDescriptionHash;
         canceled = searchedEvent.canceled;
+        ticketTypeCount = eventToTicketType[_eventId].length;
     }
     
     function getTicketTypeForTicket(uint _ticketId) 
@@ -259,5 +276,17 @@ contract SmartTickets is SmartTicketsHelper {
     ) {
         uint256 ticketTypeId = ticketToTicketType[_ticketId];
         return getTicketType(ticketTypeId);
+    }
+    
+    function getTicketTypeForEvent(uint _eventId, uint _index)
+        external
+        view
+        returns(uint, uint, uint, uint, bool) {
+        uint ticketTypeId = eventToTicketType[_eventId][_index];
+        return getTicketType(ticketTypeId);
+    }
+    
+    function getOneUSDCentInWei() public view returns(uint) {
+        return fiatContract.USD(FIAT_ETH_INDEX);
     }
 }

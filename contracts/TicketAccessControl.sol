@@ -12,7 +12,7 @@ contract TicketsAccessControl is Pausable {
     address public cfoAddress;
     address public cooAddress;
 
-    mapping(address => uint8) admins;
+    mapping(address => bool) eventOrganizers;
 
     address public newContractAddress;
 
@@ -43,8 +43,11 @@ contract TicketsAccessControl is Pausable {
         _;
     }
 
-    modifier onlyAdmin() {
-        require(admins[msg.sender] == 1);
+    modifier onlyEventOrganizersOrAbove() {
+        require(eventOrganizers[msg.sender] == true || 
+            msg.sender == cooAddress ||
+            msg.sender == ceoAddress ||
+            msg.sender == cfoAddress);
         _;
     }
 
@@ -72,13 +75,13 @@ contract TicketsAccessControl is Pausable {
         cooAddress = _newCOO;
     }
 
-    function addAdmin(address _newAdmin) external onlyCEO {
-        require(_newAdmin != address(0));
-        admins[_newAdmin] = 1;
+    function addEventCreators(address _organizer) external onlyCEO {
+        require(_organizer != address(0));
+        eventOrganizers[_organizer] = true;
     }
 
-    function removeAdmin(address _admin) external onlyCEO {
-        admins[_admin] = 0;
+    function removeAdmin(address _organizer) external onlyCEO {
+        eventOrganizers[_organizer] = false;
     }
 
     function setNewAddress(address _v2Address) external onlyCEO whenPaused {
