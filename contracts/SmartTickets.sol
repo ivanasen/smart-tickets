@@ -41,7 +41,7 @@ contract SmartTickets is SmartTicketsHelper {
         0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
     uint private FIAT_ETH_INDEX = 0;
     
-    uint private totalTickets;
+    uint private currentTicketIdIndex;
 
     TicketType[] ticketTypes;
     Event[] events;
@@ -49,7 +49,6 @@ contract SmartTickets is SmartTicketsHelper {
     mapping (uint => uint) ticketToTicketType;
     
     mapping (uint => address) eventIdToCreator;
-    mapping (address => mapping (uint => uint)) ownerToTicket;
     
     mapping (uint => address) ticketOwner;
     mapping (address => uint[]) private ownedTickets;
@@ -66,14 +65,24 @@ contract SmartTickets is SmartTicketsHelper {
         _;
     }
 
-    function SmartTicketsCore() public {
+    function SmartTickets() public {
         // Add the contract owner as CEO, COO, CFO and admin initially
         ceoAddress = msg.sender;
         cooAddress = msg.sender;
         cfoAddress = msg.sender;
         eventOrganizers[msg.sender] = true;
         
-        fiatContract = FiatContract(fiatContractAddress);
+        // fiatContract = FiatContract(fiatContractAddress);
+        fiatContract = new FiatContractTest();
+        
+        // Create genesis event
+        Event memory genesisEvent = Event(0, "", 0, false);
+        events.push(genesisEvent);
+        // Create genesis ticketType
+        TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, false);
+        ticketTypes.push(genesisTicketType);
+        // And genesis ticket
+        currentTicketIdIndex = currentTicketIdIndex.add(1);
     }
     
     function setFiatContractAddress(address _newAddress) external onlyCEO {
@@ -85,6 +94,14 @@ contract SmartTickets is SmartTicketsHelper {
         return ownedTickets[_owner].length;
     }
     
+    function getTicketIdForOwner(address _owner, uint _index) 
+        public
+        view
+        returns(uint) {
+        require(ownedTickets[_owner][_index] != 0);
+        return ownedTickets[_owner][_index];
+    }
+    
     function getUsdCourse() public view returns (uint) {
         return fiatContract.USD(0);
     }
@@ -93,7 +110,7 @@ contract SmartTickets is SmartTicketsHelper {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
         
         // Ensure the ticketType exists
-        require(eventIdToCreator[ticketType.eventId] != address(0));
+        require(ticketType.eventId != 0);
         
         require(events[ticketType.eventId].date > now);
         require(ticketType.currentSupply > 0);
@@ -102,22 +119,21 @@ contract SmartTickets is SmartTicketsHelper {
             ticketType.priceInUSDCents * fiatContract.USD(FIAT_ETH_INDEX));
         
         Event storage forEvent = events[ticketType.eventId];
-        forEvent.earnings.add(ticketType.priceInUSDCents);
+        forEvent.earnings = forEvent.earnings.add(ticketType.priceInUSDCents);
         
         ticketType.currentSupply = ticketType.currentSupply.sub(1);
         
-        uint newTicketId = totalTickets;
+        uint newTicketId = currentTicketIdIndex;
         
         ticketOwner[newTicketId] = msg.sender;
         ticketToTicketType[newTicketId] = _ticketTypeId;
         uint length = balanceOf(msg.sender);
-        ownedTickets[msg.sender].push(totalTickets);
-        ownedTicketsIndex[totalTickets] = length;
+        ownedTickets[msg.sender].push(currentTicketIdIndex);
+        ownedTicketsIndex[currentTicketIdIndex] = length;
         
-        totalTickets = totalTickets.add(1);
-        TicketPurchase(totalTickets - 1, msg.sender);
+        currentTicketIdIndex = currentTicketIdIndex.add(1);
+        TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
-    
     
     function createEvent(uint _date, bytes _metaDescriptionHash) external {
         require(_date > now);
@@ -175,6 +191,11 @@ contract SmartTickets is SmartTicketsHelper {
         
         ticketType.currentSupply = ticketType.currentSupply.add(1);
         forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
+        
+        ticketOwner[_ticketId] = address(0);
+        ownedTickets[msg.sender][ownedTicketsIndex[_ticketId]] = 0;
+        ownedTicketsIndex[_ticketId] = 0;
+        
         msg.sender.transfer(ticketType.priceInUSDCents * fiatContract.USD(0));
     }
     
@@ -211,7 +232,8 @@ contract SmartTickets is SmartTicketsHelper {
     }
     
     function getEventCount() external view returns(uint) {
-        return events.length;
+        // Exclude genesis event
+        return events.length.sub(1);
     }
     
     function getTicketTypesCountForEvent(uint _eventId) 
@@ -232,6 +254,7 @@ contract SmartTickets is SmartTicketsHelper {
         public
         view
         returns(
+        uint ticketTypeId,
         uint eventId,
         uint price,
         uint initialSupply,
@@ -240,6 +263,7 @@ contract SmartTickets is SmartTicketsHelper {
     ) {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
         
+        ticketTypeId = _ticketTypeId;
         eventId = ticketType.eventId;
         price = ticketType.priceInUSDCents;
         initialSupply = ticketType.initialSupply;
@@ -254,20 +278,24 @@ contract SmartTickets is SmartTicketsHelper {
         uint date,
         bytes metaDescriptionHash,
         bool canceled,
-        uint ticketTypeCount
+        uint ticketTypeCount,
+        uint earnings
     ) {
-        Event storage searchedEvent = events[_eventId];
+        require(eventIdToCreator[_eventId] != address(0));
         
+        Event storage searchedEvent = events[_eventId];
         date = searchedEvent.date;
         metaDescriptionHash = searchedEvent.metaDescriptionHash;
         canceled = searchedEvent.canceled;
         ticketTypeCount = eventToTicketType[_eventId].length;
+        earnings = searchedEvent.earnings;
     }
     
     function getTicketTypeForTicket(uint _ticketId) 
         external
         view
         returns(
+        uint,
         uint,
         uint,
         uint,
@@ -281,9 +309,14 @@ contract SmartTickets is SmartTicketsHelper {
     function getTicketTypeForEvent(uint _eventId, uint _index)
         external
         view
-        returns(uint, uint, uint, uint, bool) {
+        returns(uint, uint, uint, uint, uint, bool) {
         uint ticketTypeId = eventToTicketType[_eventId][_index];
         return getTicketType(ticketTypeId);
+    }
+    
+    function getTicketTypeCount() public view returns(uint) {
+        // Exclude genesis ticketType
+        return ticketTypes.length - 1;
     }
     
     function getOneUSDCentInWei() public view returns(uint) {
