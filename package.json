@@ -5,6 +5,6 @@
   "author": "Ivan-Asen Chakarov <vankata9907@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "zeppelin-solidity": "^1.5.0"
+    "zeppelin-solidity": "^1.7.0"
   }
 }
