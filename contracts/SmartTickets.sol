@@ -1,4 +1,4 @@
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
 import "./SmartTicketsHelper.sol";
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
@@ -135,8 +135,15 @@ contract SmartTickets is SmartTicketsHelper {
         TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
     
-    function createEvent(uint _date, bytes _metaDescriptionHash) external {
+    function createEvent(uint _date,
+        bytes _metaDescriptionHash,
+        uint[] _ticketPricesInUSDCents,
+        uint[] _ticketSupplies,
+        bool[] _ticketRefundables) external {
         require(_date > now);
+        require(_ticketPricesInUSDCents.length > 0 &&
+            _ticketPricesInUSDCents.length == _ticketSupplies.length &&
+            _ticketPricesInUSDCents.length == _ticketRefundables.length);
         
         Event memory newEvent = Event(
             _date,
@@ -147,6 +154,14 @@ contract SmartTickets is SmartTicketsHelper {
         eventIdToCreator[newEventId] = msg.sender;
         
         EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
+        
+        for (uint i = 0; i < _ticketPricesInUSDCents.length; i++) {
+            addTicketForEvent(
+                newEventId,
+                _ticketPricesInUSDCents[i],
+                _ticketSupplies[i],
+                _ticketRefundables[i]);
+        }
     }
     
     function addTicketForEvent(
@@ -155,7 +170,7 @@ contract SmartTickets is SmartTicketsHelper {
         uint _initialSupply,
         bool _refundable
     )
-        external
+        public
         validCreatorOfEvent(_eventId)
     {
         require(_initialSupply > 0);
