@@ -1,6 +1,6 @@
 // var ConvertLib = artifacts.require("./ConvertLib.sol");
-var SmartTicketsCore = artifacts.require("./SmartTicketsCore.sol");
+var SmartTickets = artifacts.require("./SmartTickets.sol");
 module.exports = function(deployer) {
   // deployer.deploy(ConvertLib);
-  deployer.deploy(SmartTicketsCore);
+  deployer.deploy(SmartTickets);
 };
