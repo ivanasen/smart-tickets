@@ -15,7 +15,7 @@ contract SmartTickets is SmartTicketsHelper {
         uint eventId,
         uint price,
         uint supply,
-        bool refundable
+        uint8 refundable
     );
     event TicketPurchase(uint ticketId, address buyer);
     
@@ -26,14 +26,14 @@ contract SmartTickets is SmartTicketsHelper {
         uint priceInUSDCents;
         uint initialSupply;
         uint currentSupply;
-        bool refundable;
+        uint8 refundable;
     }
     
     struct Event {
         uint date;
         bytes metaDescriptionHash;
         uint earnings;
-        bool canceled;
+        uint8 canceled;
     }
     
     FiatContract public fiatContract;
@@ -76,10 +76,10 @@ contract SmartTickets is SmartTicketsHelper {
         fiatContract = new FiatContractTest();
         
         // Create genesis event
-        Event memory genesisEvent = Event(0, "", 0, false);
+        Event memory genesisEvent = Event(0, "", 0, 0);
         events.push(genesisEvent);
         // Create genesis ticketType
-        TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, false);
+        TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, 0);
         ticketTypes.push(genesisTicketType);
         // And genesis ticket
         currentTicketIdIndex = currentTicketIdIndex.add(1);
@@ -139,7 +139,7 @@ contract SmartTickets is SmartTicketsHelper {
         bytes _metaDescriptionHash,
         uint[] _ticketPricesInUSDCents,
         uint[] _ticketSupplies,
-        bool[] _ticketRefundables) external {
+        uint8[] _ticketRefundables) external {
         require(_date > now);
         require(_ticketPricesInUSDCents.length > 0 &&
             _ticketPricesInUSDCents.length == _ticketSupplies.length &&
@@ -149,7 +149,7 @@ contract SmartTickets is SmartTicketsHelper {
             _date,
             _metaDescriptionHash,
             0,
-            false);
+            0);
         uint newEventId = events.push(newEvent) - 1;
         eventIdToCreator[newEventId] = msg.sender;
         
@@ -168,7 +168,7 @@ contract SmartTickets is SmartTicketsHelper {
         uint _eventId,
         uint _priceInUSDCents,
         uint _initialSupply,
-        bool _refundable
+        uint8 _refundable
     )
         public
         validCreatorOfEvent(_eventId)
@@ -202,7 +202,7 @@ contract SmartTickets is SmartTicketsHelper {
             ticketTypes[ticketToTicketType[_ticketId]];
         Event storage forEvent = events[ticketType.eventId];
         
-        require(forEvent.canceled || ticketType.refundable);
+        require(forEvent.canceled == 1 || ticketType.refundable == 1);
         
         ticketType.currentSupply = ticketType.currentSupply.add(1);
         forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
@@ -217,7 +217,7 @@ contract SmartTickets is SmartTicketsHelper {
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
         Event storage eventToCancel = events[_eventId];
         require(eventToCancel.date > now);
-        eventToCancel.canceled = true;
+        eventToCancel.canceled = 1;
         EventCancelation(_eventId);
     }
     
@@ -274,7 +274,7 @@ contract SmartTickets is SmartTicketsHelper {
         uint price,
         uint initialSupply,
         uint currentSupply,
-        bool refundable
+        uint8 refundable
     ) {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
         
@@ -292,7 +292,7 @@ contract SmartTickets is SmartTicketsHelper {
         returns(
         uint date,
         bytes metaDescriptionHash,
-        bool canceled,
+        uint8 canceled,
         uint ticketTypeCount,
         uint earnings
     ) {
@@ -315,7 +315,7 @@ contract SmartTickets is SmartTicketsHelper {
         uint,
         uint,
         uint,
-        bool
+        uint8
     ) {
         uint256 ticketTypeId = ticketToTicketType[_ticketId];
         return getTicketType(ticketTypeId);
@@ -324,7 +324,7 @@ contract SmartTickets is SmartTicketsHelper {
     function getTicketTypeForEvent(uint _eventId, uint _index)
         external
         view
-        returns(uint, uint, uint, uint, uint, bool) {
+        returns(uint, uint, uint, uint, uint, uint8) {
         uint ticketTypeId = eventToTicketType[_eventId][_index];
         return getTicketType(ticketTypeId);
     }
