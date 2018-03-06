@@ -52,8 +52,9 @@ contract SmartTickets is SmartTicketsHelper {
     
     mapping (uint => address) ticketOwner;
     mapping (address => uint[]) private ownedTickets;
-    mapping(uint => uint) private ownedTicketsIndex;
+    mapping (uint => uint) private ownedTicketsIndex;
     
+    mapping (uint => uint) ticketToSeat;
     
     modifier onlyOwnerOf(uint _ticketId) {
         require(ticketOwner[_ticketId] == msg.sender);
@@ -97,7 +98,8 @@ contract SmartTickets is SmartTicketsHelper {
     function getTicketIdForOwner(address _owner, uint _index) 
         public
         view
-        returns(uint) {
+        returns(uint)
+    {
         require(ownedTickets[_owner][_index] != 0);
         return ownedTickets[_owner][_index];
     }
@@ -139,7 +141,10 @@ contract SmartTickets is SmartTicketsHelper {
         bytes _metaDescriptionHash,
         uint[] _ticketPricesInUSDCents,
         uint[] _ticketSupplies,
-        uint8[] _ticketRefundables) external {
+        uint8[] _ticketRefundables) 
+        external
+        onlyEventOrganizersOrAbove        
+    {
         require(_date > now);
         require(_ticketPricesInUSDCents.length > 0 &&
             _ticketPricesInUSDCents.length == _ticketSupplies.length &&
@@ -324,7 +329,8 @@ contract SmartTickets is SmartTicketsHelper {
     function getTicketTypeForEvent(uint _eventId, uint _index)
         external
         view
-        returns(uint, uint, uint, uint, uint, uint8) {
+        returns(uint, uint, uint, uint, uint, uint8)
+    {
         uint ticketTypeId = eventToTicketType[_eventId][_index];
         return getTicketType(ticketTypeId);
     }
