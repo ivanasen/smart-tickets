@@ -323,6 +323,7 @@ contract SmartTickets is SmartTicketsHelper {
                 resultEvents[resultIndex++] = i;
             }
         }
+        return resultEvents;
     }
     
     function getTicketTypeForTicket(uint _ticketId) 
