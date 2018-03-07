@@ -49,6 +49,7 @@ contract SmartTickets is SmartTicketsHelper {
     mapping (uint => uint) ticketToTicketType;
     
     mapping (uint => address) eventIdToCreator;
+    mapping (address => uint) creatorEventCount;
     
     mapping (uint => address) ticketOwner;
     mapping (address => uint[]) private ownedTickets;
@@ -157,6 +158,7 @@ contract SmartTickets is SmartTicketsHelper {
             0);
         uint newEventId = events.push(newEvent) - 1;
         eventIdToCreator[newEventId] = msg.sender;
+        creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
         
         EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
         
@@ -309,6 +311,18 @@ contract SmartTickets is SmartTicketsHelper {
         canceled = searchedEvent.canceled;
         ticketTypeCount = eventToTicketType[_eventId].length;
         earnings = searchedEvent.earnings;
+    }
+
+    function getEventIdsForCreator(address _creator) external view returns(uint[]) {
+        require(_creator != address(0));
+        
+        uint[] memory resultEvents = new uint[](creatorEventCount[_creator]);
+        uint resultIndex = 0;
+        for (uint i = 1; i < events.length; i++) {
+            if (eventIdToCreator[i] == _creator) {
+                resultEvents[resultIndex++] = i;
+            }
+        }
     }
     
     function getTicketTypeForTicket(uint _ticketId) 
