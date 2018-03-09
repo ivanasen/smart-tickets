@@ -138,7 +138,7 @@ contract SmartTickets is SmartTicketsHelper {
         ownedTicketsIndex[currentTicketIdIndex] = length;
         
         currentTicketIdIndex = currentTicketIdIndex.add(1);
-        emit TicketPurchase(currentTicketIdIndex - 1, msg.sender);
+        TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
     
     function createEvent(uint _date,
@@ -163,7 +163,7 @@ contract SmartTickets is SmartTicketsHelper {
         eventIdToCreator[newEventId] = msg.sender;
         creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
         
-        emit EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
+        EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
         
         for (uint i = 0; i < _ticketPricesInUSDCents.length; i++) {
             addTicketForEvent(
@@ -198,7 +198,7 @@ contract SmartTickets is SmartTicketsHelper {
         
         eventToTicketType[_eventId].push(ticketTypeId);
         
-        emit TicketTypeCreation(
+        TicketTypeCreation(
             ticketTypeId,
             _eventId,
             _priceInUSDCents,
@@ -228,7 +228,7 @@ contract SmartTickets is SmartTicketsHelper {
         Event storage eventToCancel = events[_eventId];
         require(eventToCancel.date > now);
         eventToCancel.canceled = 1;
-        emit EventCancelation(_eventId);
+        EventCancelation(_eventId);
     }
     
     function withdrawalEarningsForEvent(uint _eventId) 
