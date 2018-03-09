@@ -74,8 +74,7 @@ contract SmartTickets is SmartTicketsHelper {
         cfoAddress = msg.sender;
         eventOrganizers[msg.sender] = true;
         
-        // fiatContract = FiatContract(fiatContractAddress);
-        fiatContract = new FiatContractTest();
+        fiatContract = FiatContract(fiatContractAddress);
         
         // Create genesis event
         Event memory genesisEvent = Event(0, "", 0, 0);
@@ -94,6 +93,10 @@ contract SmartTickets is SmartTicketsHelper {
     
     function balanceOf(address _owner) public view returns (uint) {
         return ownedTickets[_owner].length;
+    }
+    
+    function getTicketsForOwner(address _owner) public view returns (uint[]) {
+        return ownedTickets[_owner];
     }
     
     function getTicketIdForOwner(address _owner, uint _index) 
@@ -122,7 +125,7 @@ contract SmartTickets is SmartTicketsHelper {
             ticketType.priceInUSDCents * fiatContract.USD(FIAT_ETH_INDEX));
         
         Event storage forEvent = events[ticketType.eventId];
-        forEvent.earnings = forEvent.earnings.add(ticketType.priceInUSDCents);
+        forEvent.earnings = forEvent.earnings.add(msg.value);
         
         ticketType.currentSupply = ticketType.currentSupply.sub(1);
         
@@ -135,7 +138,7 @@ contract SmartTickets is SmartTicketsHelper {
         ownedTicketsIndex[currentTicketIdIndex] = length;
         
         currentTicketIdIndex = currentTicketIdIndex.add(1);
-        TicketPurchase(currentTicketIdIndex - 1, msg.sender);
+        emit TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
     
     function createEvent(uint _date,
@@ -160,7 +163,7 @@ contract SmartTickets is SmartTicketsHelper {
         eventIdToCreator[newEventId] = msg.sender;
         creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
         
-        EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
+        emit EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
         
         for (uint i = 0; i < _ticketPricesInUSDCents.length; i++) {
             addTicketForEvent(
@@ -195,7 +198,7 @@ contract SmartTickets is SmartTicketsHelper {
         
         eventToTicketType[_eventId].push(ticketTypeId);
         
-        TicketTypeCreation(
+        emit TicketTypeCreation(
             ticketTypeId,
             _eventId,
             _priceInUSDCents,
@@ -225,7 +228,7 @@ contract SmartTickets is SmartTicketsHelper {
         Event storage eventToCancel = events[_eventId];
         require(eventToCancel.date > now);
         eventToCancel.canceled = 1;
-        EventCancelation(_eventId);
+        emit EventCancelation(_eventId);
     }
     
     function withdrawalEarningsForEvent(uint _eventId) 
