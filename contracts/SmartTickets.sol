@@ -361,4 +361,26 @@ contract SmartTickets is SmartTicketsHelper {
     function getOneUSDCentInWei() public view returns(uint) {
         return fiatContract.USD(FIAT_ETH_INDEX);
     }
+    
+    function verifyTicket(uint _ticketId, address _addr, uint8 _v, bytes32 _r, bytes32 _s) public view returns (bool) {
+        require(msg.sender != address(0));
+        
+        if(_isSigned(_addr, bytes32(_ticketId), _v, _r, _s)) {
+            if (ticketOwner[_ticketId] == msg.sender) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    function _isSigned(address _addr, 
+        bytes32 msgHash, 
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        private
+        pure
+        returns (bool) {
+        return ecrecover(msgHash, _v, _r, _s) == _addr;
+    }
 }

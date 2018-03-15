@@ -5,6 +5,7 @@
   "author": "Ivan-Asen Chakarov <vankata9907@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "truffle-hdwallet-provider": "^0.0.3",
     "zeppelin-solidity": "^1.7.0"
   }
 }
