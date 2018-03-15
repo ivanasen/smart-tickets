@@ -362,25 +362,30 @@ contract SmartTickets is SmartTicketsHelper {
         return fiatContract.USD(FIAT_ETH_INDEX);
     }
     
-    function verifyTicket(uint _ticketId, address _addr, uint8 _v, bytes32 _r, bytes32 _s) public view returns (bool) {
+    function verifyTicket(uint _ticketId, 
+        bytes32 _ticketIdHash,
+        address _addr,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s) 
+        public
+        view
+        returns (bool) {
         require(msg.sender != address(0));
         
-        if(_isSigned(_addr, bytes32(_ticketId), _v, _r, _s)) {
-            if (ticketOwner[_ticketId] == msg.sender) {
-                return true;
-            }
-        }
-        return false;
+        bool isSigned = _isSigned(_addr, _ticketIdHash, _v, _r, _s);
+        bool validOwner = ticketOwner[_ticketId] == _addr;
+        return isSigned && validOwner;
     }
     
     function _isSigned(address _addr, 
-        bytes32 msgHash, 
+        bytes32 _msgHash, 
         uint8 _v,
         bytes32 _r,
         bytes32 _s)
         private
         pure
         returns (bool) {
-        return ecrecover(msgHash, _v, _r, _s) == _addr;
+        return ecrecover(_msgHash, _v, _r, _s) == _addr;
     }
 }
