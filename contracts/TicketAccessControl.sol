@@ -86,8 +86,7 @@ contract TicketsAccessControl is Pausable {
     }
 
     function setNewAddress(address _v2Address) external onlyCEO whenPaused {
-        // See README.md for updgrade plan
         newContractAddress = _v2Address;
-        ContractUpgrade(_v2Address);
+        emit ContractUpgrade(_v2Address);
     }
 }
