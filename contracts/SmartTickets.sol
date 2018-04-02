@@ -1,10 +1,10 @@
 pragma solidity ^0.4.19;
 
-import "./SmartTicketsHelper.sol";
+import "./TicketAccessControl.sol";
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "./FiatContract.sol";
 
-contract SmartTickets is SmartTicketsHelper {
+contract SmartTickets is TicketAccessControl {
     using SafeMath for uint;
     
     event EventCreation(uint id, uint date, bytes metaDescriptionHash, address creator);

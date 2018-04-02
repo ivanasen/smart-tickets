@@ -2,7 +2,7 @@ pragma solidity ^0.4.19;
 
 import "../node_modules/zeppelin-solidity/contracts/lifecycle/Pausable.sol";
 
-contract TicketsAccessControl is Pausable {
+contract TicketAccessControl is Pausable {
 
     /// @dev Emited when contract is upgraded - See README.md for updgrade plan
     event ContractUpgrade(address newContract);
