@@ -1,8 +1,8 @@
-pragma solidity ^0.4.19;
+pragma solidity 0.4.23;
 
-import "../node_modules/zeppelin-solidity/contracts/lifecycle/Pausable.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
-contract TicketAccessControl is Pausable {
+contract TicketAccessControl is Ownable {
 
     /// @dev Emited when contract is upgraded - See README.md for updgrade plan
     event ContractUpgrade(address newContract);
@@ -12,7 +12,7 @@ contract TicketAccessControl is Pausable {
     address public cfoAddress;
     address public cooAddress;
 
-    mapping(address => bool) eventOrganizers;
+    mapping(address => bool) admins;
 
     address public newContractAddress;
 
@@ -43,7 +43,7 @@ contract TicketAccessControl is Pausable {
         _;
     }
 
-    modifier onlyEventOrganizersOrAbove() {
+    modifier onlyAdminOrAbove() {
         // Disable for testing purposes
         // require(eventOrganizers[msg.sender] == true || 
         //     msg.sender == cooAddress ||
@@ -76,16 +76,16 @@ contract TicketAccessControl is Pausable {
         cooAddress = _newCOO;
     }
 
-    function addEventCreators(address _organizer) external onlyCEO {
-        require(_organizer != address(0));
-        eventOrganizers[_organizer] = true;
+    function addAdmin(address _admin) external onlyCLevel {
+        require(_admin != address(0));
+        admins[_admin] = true;
     }
 
-    function removeAdmin(address _organizer) external onlyCEO {
-        eventOrganizers[_organizer] = false;
+    function removeAdmin(address _admin) external onlyCLevel {
+        admins[_admin] = false;
     }
 
-    function setNewAddress(address _v2Address) external onlyCEO whenPaused {
+    function setNewAddress(address _v2Address) external onlyCEO {
         newContractAddress = _v2Address;
         emit ContractUpgrade(_v2Address);
     }

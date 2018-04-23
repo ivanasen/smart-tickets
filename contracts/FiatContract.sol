@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity 0.4.23;
 
 contract FiatContract {
     function ETH(uint _id) public constant returns (uint256);

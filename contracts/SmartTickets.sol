@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity 0.4.23;
 
 import "./TicketAccessControl.sol";
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
@@ -37,8 +37,7 @@ contract SmartTickets is TicketAccessControl {
     }
     
     FiatContract public fiatContract;
-    address fiatContractAddress = 
-        0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
+    address fiatContractAddress = 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
     uint private FIAT_ETH_INDEX = 0;
     
     uint private currentTicketIdIndex;
@@ -72,7 +71,7 @@ contract SmartTickets is TicketAccessControl {
         ceoAddress = msg.sender;
         cooAddress = msg.sender;
         cfoAddress = msg.sender;
-        eventOrganizers[msg.sender] = true;
+        admins[msg.sender] = true;
         
         fiatContract = FiatContract(fiatContractAddress);
         
@@ -86,7 +85,7 @@ contract SmartTickets is TicketAccessControl {
         currentTicketIdIndex = currentTicketIdIndex.add(1);
     }
     
-    function setFiatContractAddress(address _newAddress) external onlyCEO {
+    function setFiatContractAddress(address _newAddress) external onlyCLevel {
         fiatContractAddress = _newAddress;
         fiatContract = FiatContract(_newAddress);
     }
@@ -147,7 +146,7 @@ contract SmartTickets is TicketAccessControl {
         uint[] _ticketSupplies,
         uint8[] _ticketRefundables) 
         external
-        onlyEventOrganizersOrAbove        
+        onlyAdminOrAbove
     {
         require(_date > now);
         require(_ticketPricesInUSDCents.length > 0 &&
