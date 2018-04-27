@@ -7,7 +7,7 @@ class EventController {
     if (isNaN(page) || page < 0) {
       res.status(400).send('Invalid page index');
     } else {
-      const events = await Event.get(page);
+      const events = await Event.getAll(page);
       res.send(events);
     }
   }
