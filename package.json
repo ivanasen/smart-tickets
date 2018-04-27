@@ -1,11 +1,40 @@
 {
   "name": "smart-tickets",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "A decentralized event hosting platform",
+  "main": "server.js",
   "author": "Ivan-Asen Chakarov <vankata9907@gmail.com>",
   "license": "MIT",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development nodemon server.js",
+    "test": "truffle test test/*"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.22.2",
+    "babel-core": "^6.22.1",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-transform-runtime": "^6.22.0",
+    "babel-preset-env": "^1.1.8",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-register": "^6.22.0",
+    "css-loader": "^0.26.1",
+    "json-loader": "^0.5.4",
+    "style-loader": "^0.13.1"
+  },
   "dependencies": {
+    "truffle-contract": "^1.1.11",
     "truffle-hdwallet-provider": "^0.0.3",
-    "zeppelin-solidity": "^1.7.0"
+    "zeppelin-solidity": "^1.7.0",
+    "body-parser": "^1.18.2",
+    "cors": "^2.8.4",
+    "cross-env": "^5.1.4",
+    "express": "^4.16.3",
+    "express-subdomain": "^1.0.5",
+    "helmet": "^3.12.0",
+    "morgan": "^1.9.0",
+    "nodemon": "^1.17.3",
+    "request": "^2.85.0",
+    "web3": "^1.0.0-beta.34"
   }
 }
