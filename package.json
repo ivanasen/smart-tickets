@@ -2,11 +2,11 @@
   "name": "smart-tickets",
   "version": "1.0.0",
   "description": "A decentralized event hosting platform",
-  "main": "server.js",
+  "main": "index.js",
   "author": "Ivan-Asen Chakarov <vankata9907@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "cross-env NODE_ENV=development nodemon server.js",
+    "start": "cross-env NODE_ENV=development nodemon index.js",
     "test": "truffle test test/*"
   },
   "devDependencies": {

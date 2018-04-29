@@ -1,6 +1,8 @@
 const router = require('express').Router();
-const eventController = require('../controllers/events');
+const EventController = require('../controllers/events');
+const TxHistoryController = require('../controllers/tx-history');
 
-router.route('/events').get(eventController.index);
+router.route('/events').get(EventController.index);
+router.route('/history').get(TxHistoryController.index);
 
 module.exports = router;
