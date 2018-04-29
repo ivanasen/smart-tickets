@@ -33,14 +33,18 @@ contract SmartTickets is TicketAccessControl {
         uint date;
         bytes metaDescriptionHash;
         uint earnings;
-        bool canceled;
+        bool cancelled;
         bool[] seats;
+        PromotionLevel promotionLevel;
+        uint promotionExpirationDate;
     }
     
     FiatContract public fiatContract;
     address fiatContractAddress = 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
     uint private FIAT_ETH_INDEX = 0;
     
+    enum PromotionLevel { NONE, SMALL, MEDIUM, BIG }
+    mapping (uint8 => uint) promotionLevelPrices;
 
     TicketType[] ticketTypes;
     Event[] events;
@@ -66,6 +70,13 @@ contract SmartTickets is TicketAccessControl {
         require(eventIdToCreator[_eventId] == msg.sender);
         _;
     }
+    
+    modifier validPromotionLevel(PromotionLevel _level) {
+        require(_level == PromotionLevel.SMALL || 
+            _level == PromotionLevel.MEDIUM ||
+            _level == PromotionLevel.BIG);
+        _;
+    }
 
     constructor() public {
         // Add the contract owner as CEO, COO, CFO and admin initially
@@ -77,13 +88,24 @@ contract SmartTickets is TicketAccessControl {
         fiatContract = FiatContract(fiatContractAddress);
         
         // Create genesis event
-        Event memory genesisEvent = Event(0, "", 0, false, new bool[](0));
+        Event memory genesisEvent = Event(0, 
+            "",
+            0, 
+            false, 
+            new bool[](0),
+            PromotionLevel.NONE,
+            0);
         events.push(genesisEvent);
         // Create genesis ticketType
         TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, false);
         ticketTypes.push(genesisTicketType);
         // And genesis ticket
         currentTicketIdIndex = currentTicketIdIndex.add(1);
+        
+        // Set initial promotion level prices
+        promotionLevelPrices[uint8(PromotionLevel.SMALL)] = fiatContract.USD(10);
+        promotionLevelPrices[uint8(PromotionLevel.MEDIUM)] = fiatContract.USD(20);
+        promotionLevelPrices[uint8(PromotionLevel.BIG)] = fiatContract.USD(30);
     }
     
     function setFiatContractAddress(address _newAddress) external onlyCLevel {
@@ -159,7 +181,9 @@ contract SmartTickets is TicketAccessControl {
             _metaDescriptionHash,
             0,
             false,
-            new bool[](_seatCount));
+            new bool[](_seatCount),
+            PromotionLevel.NONE,
+            0);
         uint newEventId = events.push(newEvent) - 1;
         eventIdToCreator[newEventId] = msg.sender;
         creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
@@ -213,7 +237,7 @@ contract SmartTickets is TicketAccessControl {
             ticketTypes[ticketToTicketType[_ticketId]];
         Event storage forEvent = events[ticketType.eventId];
         
-        require(forEvent.canceled || ticketType.refundable);
+        require(forEvent.cancelled || ticketType.refundable);
         
         ticketType.currentSupply = ticketType.currentSupply.add(1);
         forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
@@ -229,7 +253,7 @@ contract SmartTickets is TicketAccessControl {
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
         Event storage eventToCancel = events[_eventId];
         require(eventToCancel.date > now);
-        eventToCancel.canceled = true;
+        eventToCancel.cancelled = true;
         emit EventCancelation(_eventId);
     }
     
@@ -277,6 +301,28 @@ contract SmartTickets is TicketAccessControl {
         }
     }
     
+    function setPromotionLevelPrice(PromotionLevel _level, uint _newPrice) 
+        external
+        validPromotionLevel(_level)
+        onlyCLevel {
+        promotionLevelPrices[uint8(_level)] = fiatContract.USD(_newPrice);
+    }
+    
+    function promoteEvent(uint _eventId, PromotionLevel _level, uint8 _numDays)
+        validCreatorOfEvent(_eventId)
+        validPromotionLevel(_level)
+        external
+        payable {
+        Event storage forEvent = events[_eventId];
+        require(!forEvent.cancelled || forEvent.date > now);
+        
+        uint price = _numDays * promotionLevelPrices[uint8(_level)];
+        require(msg.value == fiatContract.ETH(price));
+        
+        forEvent.promotionLevel = _level;
+        forEvent.promotionExpirationDate = now + (_numDays * 1 days);
+    }
+    
     function getTicketType(uint _ticketTypeId) 
         public
         view
@@ -304,7 +350,7 @@ contract SmartTickets is TicketAccessControl {
         returns(
         uint date,
         bytes metaDescriptionHash,
-        bool canceled,
+        bool cancelled,
         uint ticketTypeCount,
         uint earnings
     ) {
@@ -313,7 +359,7 @@ contract SmartTickets is TicketAccessControl {
         Event storage searchedEvent = events[_eventId];
         date = searchedEvent.date;
         metaDescriptionHash = searchedEvent.metaDescriptionHash;
-        canceled = searchedEvent.canceled;
+        cancelled = searchedEvent.cancelled;
         ticketTypeCount = eventToTicketType[_eventId].length;
         earnings = searchedEvent.earnings;
     }
