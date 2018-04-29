@@ -15,7 +15,7 @@ contract SmartTickets is TicketAccessControl {
         uint eventId,
         uint price,
         uint supply,
-        uint8 refundable
+        bool refundable
     );
     event TicketPurchase(uint ticketId, address buyer);
     
@@ -26,24 +26,26 @@ contract SmartTickets is TicketAccessControl {
         uint priceInUSDCents;
         uint initialSupply;
         uint currentSupply;
-        uint8 refundable;
+        bool refundable;
     }
     
     struct Event {
         uint date;
         bytes metaDescriptionHash;
         uint earnings;
-        uint8 canceled;
+        bool canceled;
+        bool[] seats;
     }
     
     FiatContract public fiatContract;
     address fiatContractAddress = 0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909;
     uint private FIAT_ETH_INDEX = 0;
     
-    uint private currentTicketIdIndex;
 
     TicketType[] ticketTypes;
     Event[] events;
+    uint private currentTicketIdIndex;
+    mapping (uint => uint16) ticketToSeat;
     mapping (uint => uint[]) eventToTicketType;
     mapping (uint => uint) ticketToTicketType;
     
@@ -54,7 +56,6 @@ contract SmartTickets is TicketAccessControl {
     mapping (address => uint[]) private ownedTickets;
     mapping (uint => uint) private ownedTicketsIndex;
     
-    mapping (uint => uint) ticketToSeat;
     
     modifier onlyOwnerOf(uint _ticketId) {
         require(ticketOwner[_ticketId] == msg.sender);
@@ -66,7 +67,7 @@ contract SmartTickets is TicketAccessControl {
         _;
     }
 
-    function SmartTickets() public {
+    constructor() public {
         // Add the contract owner as CEO, COO, CFO and admin initially
         ceoAddress = msg.sender;
         cooAddress = msg.sender;
@@ -76,10 +77,10 @@ contract SmartTickets is TicketAccessControl {
         fiatContract = FiatContract(fiatContractAddress);
         
         // Create genesis event
-        Event memory genesisEvent = Event(0, "", 0, 0);
+        Event memory genesisEvent = Event(0, "", 0, false, new bool[](0));
         events.push(genesisEvent);
         // Create genesis ticketType
-        TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, 0);
+        TicketType memory genesisTicketType = TicketType(0, 0, 0, 0, false);
         ticketTypes.push(genesisTicketType);
         // And genesis ticket
         currentTicketIdIndex = currentTicketIdIndex.add(1);
@@ -111,27 +112,25 @@ contract SmartTickets is TicketAccessControl {
         return fiatContract.USD(0);
     }
     
-    function buyTicket(uint _ticketTypeId) public payable {
+    function buyTicket(uint _ticketTypeId, uint16 _seatIndex) public payable {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
+        Event storage forEvent = events[ticketType.eventId];
         
-        // Ensure the ticketType exists
         require(ticketType.eventId != 0);
-        
         require(events[ticketType.eventId].date > now);
         require(ticketType.currentSupply > 0);
-        
-        require(msg.value == 
+        require(!forEvent.seats[_seatIndex]);
+        require(msg.value ==
             ticketType.priceInUSDCents * fiatContract.USD(FIAT_ETH_INDEX));
         
-        Event storage forEvent = events[ticketType.eventId];
+        
         forEvent.earnings = forEvent.earnings.add(msg.value);
-        
         ticketType.currentSupply = ticketType.currentSupply.sub(1);
+        forEvent.seats[_seatIndex] = true;
+        ticketToSeat[currentTicketIdIndex] = _seatIndex;
         
-        uint newTicketId = currentTicketIdIndex;
-        
-        ticketOwner[newTicketId] = msg.sender;
-        ticketToTicketType[newTicketId] = _ticketTypeId;
+        ticketOwner[currentTicketIdIndex] = msg.sender;
+        ticketToTicketType[currentTicketIdIndex] = _ticketTypeId;
         uint length = balanceOf(msg.sender);
         ownedTickets[msg.sender].push(currentTicketIdIndex);
         ownedTicketsIndex[currentTicketIdIndex] = length;
@@ -144,7 +143,8 @@ contract SmartTickets is TicketAccessControl {
         bytes _metaDescriptionHash,
         uint[] _ticketPricesInUSDCents,
         uint[] _ticketSupplies,
-        uint8[] _ticketRefundables) 
+        bool[] _ticketRefundables,
+        uint16 _seatCount) 
         external
         onlyAdminOrAbove
     {
@@ -152,12 +152,14 @@ contract SmartTickets is TicketAccessControl {
         require(_ticketPricesInUSDCents.length > 0 &&
             _ticketPricesInUSDCents.length == _ticketSupplies.length &&
             _ticketPricesInUSDCents.length == _ticketRefundables.length);
+        require(_seatCount > 0);
         
         Event memory newEvent = Event(
             _date,
             _metaDescriptionHash,
             0,
-            0);
+            false,
+            new bool[](_seatCount));
         uint newEventId = events.push(newEvent) - 1;
         eventIdToCreator[newEventId] = msg.sender;
         creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
@@ -177,7 +179,7 @@ contract SmartTickets is TicketAccessControl {
         uint _eventId,
         uint _priceInUSDCents,
         uint _initialSupply,
-        uint8 _refundable
+        bool _refundable
     )
         public
         validCreatorOfEvent(_eventId)
@@ -211,10 +213,11 @@ contract SmartTickets is TicketAccessControl {
             ticketTypes[ticketToTicketType[_ticketId]];
         Event storage forEvent = events[ticketType.eventId];
         
-        require(forEvent.canceled == 1 || ticketType.refundable == 1);
+        require(forEvent.canceled || ticketType.refundable);
         
         ticketType.currentSupply = ticketType.currentSupply.add(1);
         forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
+        forEvent.seats[ticketToSeat[_ticketId]] = false;
         
         ticketOwner[_ticketId] = address(0);
         ownedTickets[msg.sender][ownedTicketsIndex[_ticketId]] = 0;
@@ -226,7 +229,7 @@ contract SmartTickets is TicketAccessControl {
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
         Event storage eventToCancel = events[_eventId];
         require(eventToCancel.date > now);
-        eventToCancel.canceled = 1;
+        eventToCancel.canceled = true;
         emit EventCancelation(_eventId);
     }
     
@@ -283,7 +286,7 @@ contract SmartTickets is TicketAccessControl {
         uint price,
         uint initialSupply,
         uint currentSupply,
-        uint8 refundable
+        bool refundable
     ) {
         TicketType storage ticketType = ticketTypes[_ticketTypeId];
         
@@ -301,7 +304,7 @@ contract SmartTickets is TicketAccessControl {
         returns(
         uint date,
         bytes metaDescriptionHash,
-        uint8 canceled,
+        bool canceled,
         uint ticketTypeCount,
         uint earnings
     ) {
@@ -328,6 +331,15 @@ contract SmartTickets is TicketAccessControl {
         return resultEvents;
     }
     
+    function getEventSeats(uint _eventId)
+        external
+        view
+        returns(bool[]) {
+        Event storage searchedEvent = events[_eventId];
+        require(searchedEvent.seats.length > 0);
+        return searchedEvent.seats;
+    }
+    
     function getTicketTypeForTicket(uint _ticketId) 
         external
         view
@@ -337,7 +349,7 @@ contract SmartTickets is TicketAccessControl {
         uint,
         uint,
         uint,
-        uint8
+        bool
     ) {
         uint256 ticketTypeId = ticketToTicketType[_ticketId];
         return getTicketType(ticketTypeId);
@@ -346,7 +358,7 @@ contract SmartTickets is TicketAccessControl {
     function getTicketTypeForEvent(uint _eventId, uint _index)
         external
         view
-        returns(uint, uint, uint, uint, uint, uint8)
+        returns(uint, uint, uint, uint, uint, bool)
     {
         uint ticketTypeId = eventToTicketType[_eventId][_index];
         return getTicketType(ticketTypeId);
