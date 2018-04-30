@@ -1,4 +1,3 @@
-const request = require('request-promise-native');
 const convertHex = require('convert-hex');
 const convertString = require('convert-string');
 const _ = require('lodash');
@@ -59,7 +58,7 @@ class Event {
   static async _requestFromIpfs(hexString) {
     const ipfsHashBytes = convertHex.hexToBytes(hexString);
     const ipfsHashString = convertString.bytesToString(ipfsHashBytes);
-    return await request(config.ipfsUrl + ipfsHashString);
+    return await fetch(config.ipfsUrl + ipfsHashString);
   }
 }
 
