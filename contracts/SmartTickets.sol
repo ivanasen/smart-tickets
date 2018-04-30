@@ -85,7 +85,8 @@ contract SmartTickets is TicketAccessControl {
         cfoAddress = msg.sender;
         admins[msg.sender] = true;
         
-        fiatContract = FiatContract(fiatContractAddress);
+        fiatContract = FiatContractDebug(fiatContractAddress);
+        // fiatContract = FiatContract(fiatContractAddress);
         
         // Create genesis event
         Event memory genesisEvent = Event(0, 
@@ -103,9 +104,9 @@ contract SmartTickets is TicketAccessControl {
         currentTicketIdIndex = currentTicketIdIndex.add(1);
         
         // Set initial promotion level prices
-        promotionLevelPrices[uint8(PromotionLevel.SMALL)] = fiatContract.USD(10);
-        promotionLevelPrices[uint8(PromotionLevel.MEDIUM)] = fiatContract.USD(20);
-        promotionLevelPrices[uint8(PromotionLevel.BIG)] = fiatContract.USD(30);
+        promotionLevelPrices[uint8(PromotionLevel.SMALL)] = 10;
+        promotionLevelPrices[uint8(PromotionLevel.MEDIUM)] = 20;
+        promotionLevelPrices[uint8(PromotionLevel.BIG)] = 30;
     }
     
     function setFiatContractAddress(address _newAddress) external onlyCLevel {
