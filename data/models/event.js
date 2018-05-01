@@ -14,7 +14,7 @@ const ORDER_TYPES = {
   popular: 'popular'
 };
 class Event {
-  static async getAll(pageIndex = DEFAULT_PAGE_INDEX, limit, order) {
+  static async getAll(pageIndex, limit, order) {
     return await contract.deployed().then(async instance => {
       const eventCount = await instance.getEventCount.call();
 
@@ -22,8 +22,10 @@ class Event {
       switch (order) {
         case ORDER_TYPES.popular: {
           const eventsContract = await Promise.all(
-            _.range(1, eventCount).map(async id => {
+            // Start at index 1 since at index 0 is the genesis event
+            _.range(1, eventCount.add(1)).map(async id => {
               const event = await instance.getEvent(id);
+              console.log(id);
               event.eventId = id;
               return event;
             })
@@ -31,9 +33,9 @@ class Event {
 
           eventsContract.sort((a, b) => b[INDEX_PROMOTION_LEVEL] - a[INDEX_PROMOTION_LEVEL]);
           
-          const startIndex = pageIndex * limit; // Start one index ahead because event at index 0 is genesis event
+          const startIndex = pageIndex * limit;
           const endIndex = Math.min(eventsContract.length, startIndex + limit);
-          if (startIndex > eventCount) {
+          if (startIndex >= eventCount) {
             return [];
           }
 
@@ -81,7 +83,7 @@ class Event {
             _.rangeRight(startIndex, endIndex).map(async id => {
               const event = await instance.getEvent(id);
               const response = await this._requestFromIpfs(
-                event[INDEX_EVENT_ID]
+                event[INDEX_ID]
               );
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
