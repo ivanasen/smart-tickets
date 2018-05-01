@@ -84,8 +84,8 @@ contract SmartTickets is TicketAccessControl {
         cfoAddress = msg.sender;
         admins[msg.sender] = true;
         
-        fiatContract = new FiatContractDebug();
-        // fiatContract = FiatContract(fiatContractAddress);
+        // fiatContract = new FiatContractDebug();
+        fiatContract = FiatContract(fiatContractAddress);
         
         // Create genesis event
         Event memory genesisEvent = Event(0, 
