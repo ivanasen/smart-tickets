@@ -5,7 +5,8 @@ const _ = require('lodash');
 const contract = require('../../config/smart-tickets');
 const config = require('../../config/config.json');
 
-const INDEX_EVENT_ID = 1;
+const INDEX_ID = 1;
+const INDEX_PROMOTION_LEVEL = 5;
 
 const ORDER_TYPES = {
   recent: 'recent',
@@ -23,9 +24,30 @@ class Event {
           const eventsContract = await Promise.all(
             _.range(1, eventCount).map(async id => {
               const event = await instance.getEvent(id);
-              events.push(event);
+              event.eventId = id;
+              return event;
             })
           )
+
+          eventsContract.sort((a, b) => b[INDEX_PROMOTION_LEVEL] - a[INDEX_PROMOTION_LEVEL]);
+          
+          const startIndex = pageIndex * limit; // Start one index ahead because event at index 0 is genesis event
+          const endIndex = Math.min(eventsContract.length, startIndex + limit);
+          if (startIndex > eventCount) {
+            return [];
+          }
+
+          await Promise.all(            
+            _.range(startIndex, endIndex).map(async i => {
+              const event = eventsContract[i];
+              const response = await this._requestFromIpfs(
+                event[INDEX_ID]
+              );
+              const eventIpfs = JSON.parse(response);
+              eventIpfs.eventId = event.eventId;
+              events.push(eventIpfs);
+            })
+          );
 
           break;
         }
@@ -33,7 +55,7 @@ class Event {
         case ORDER_TYPES.old: {
           const startIndex = pageIndex * limit + 1; // Start one index ahead because event at index 0 is genesis event
           const endIndex = Math.min(eventCount.add(1), startIndex + limit);
-          if (startInde > eventCount) {
+          if (startIndex > eventCount) {
             return [];
           }
 
