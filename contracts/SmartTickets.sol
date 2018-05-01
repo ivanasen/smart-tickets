@@ -18,6 +18,7 @@ contract SmartTickets is TicketAccessControl {
         bool refundable
     );
     event TicketPurchase(uint ticketId, address buyer);
+    event TicketRefund(uint ticketId, address refunder, TicketType ticketType, Event forEvent);
     
     event Withdrawal(address to, uint amount);
     
@@ -239,6 +240,7 @@ contract SmartTickets is TicketAccessControl {
         ownedTicketsIndex[_ticketId] = 0;
         
         msg.sender.transfer(ticketType.priceInUSDCents * fiatContract.USD(0));
+        emit TicketRefund(_ticketId, msg.sender, ticketType, forEvent);
     }
     
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
