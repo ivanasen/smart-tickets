@@ -15,7 +15,7 @@ module.exports = {
         return new HDWalletProvider(mnemonic, infuraRopstenUrl);
       },
       network_id: 3,
-      gas: 4500000,
+      gas: 4700000,
       gasPrice: 21000000000
     }
   }
