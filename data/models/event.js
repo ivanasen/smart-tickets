@@ -44,7 +44,7 @@ class Event {
               const response = await this._requestFromIpfs(event[INDEX_ID]);
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = event.eventId;
-              eventIpfs.ticketTypes = event.ticketTypes;
+              eventIpfs.tickets = event.ticketTypes;
               events.push(eventIpfs);
             })
           );
@@ -149,7 +149,7 @@ class Event {
 
     const ticketTypes = await Event._getTicketTypesForEvent(contract, id);
 
-    event.ticketTypes = ticketTypes;
+    event.tickets = ticketTypes;
     event.eventId = id;
     return event;
   }
