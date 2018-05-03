@@ -48,7 +48,7 @@ class Event {
 
               eventIpfs.eventId = event.eventId;
               eventIpfs.tickets = event.ticketTypes;
-              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
+              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
               events.push(eventIpfs);
             })
           );
@@ -72,7 +72,7 @@ class Event {
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
               eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
-              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
+              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
               events.push(eventIpfs);
             })
           );
@@ -90,7 +90,7 @@ class Event {
               const eventIpfs = JSON.parse(response);              
               eventIpfs.eventId = id;
               eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
-              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
+              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
               events.push(eventIpfs);
             })
           );
