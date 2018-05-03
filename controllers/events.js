@@ -9,8 +9,13 @@ class EventController {
     const limit = parseInt(req.query.limit) || DEFAULT_PAGE_LIMIT;
     const order = req.query.order || DEFAULT_PAGE_ORDER;
 
+    const creatorAddress = req.query.address;
+
     if (isNaN(page) || page < 0) {
       res.status(400).send('Invalid page index');
+    } else if (creatorAddress) {
+      const events = await Event.getAllForCreator(creatorAddress);
+      res.send(events);
     } else {
       const events = await Event.getAll(page, limit, order);
       res.send(events);

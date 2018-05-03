@@ -9,6 +9,7 @@ const { convertTimestampToMillis } = require('../../utils/util');
 const INDEX_TIMESTAMP = 0;
 const INDEX_IPFS_HASH = 1;
 const INDEX_PROMOTION_LEVEL = 5;
+const INDEX_EARNINGS = 4;
 
 const ORDER_TYPES = {
   recent: 'recent',
@@ -43,12 +44,17 @@ class Event {
           await Promise.all(
             _.range(startIndex, endIndex).map(async i => {
               const event = eventsContract[i];
-              const response = await this._requestFromIpfs(event[INDEX_IPFS_HASH]);
+              const response = await this._requestFromIpfs(
+                event[INDEX_IPFS_HASH]
+              );
               const eventIpfs = JSON.parse(response);
 
               eventIpfs.eventId = event.eventId;
               eventIpfs.tickets = event.ticketTypes;
-              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
+              eventIpfs.earnings = event[INDEX_EARNINGS];
+              eventIpfs.timestamp = convertTimestampToMillis(
+                event[INDEX_TIMESTAMP]
+              );
               events.push(eventIpfs);
             })
           );
@@ -71,8 +77,14 @@ class Event {
               );
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
-              eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
-              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
+              eventIpfs.tickets = await Event._getTicketTypesForEvent(
+                instance,
+                id
+              );
+              eventIpfs.timestamp = convertTimestampToMillis(
+                event[INDEX_TIMESTAMP]
+              );
+              eventIpfs.earnings = event[INDEX_EARNINGS];
               events.push(eventIpfs);
             })
           );
@@ -86,11 +98,19 @@ class Event {
           await Promise.all(
             _.rangeRight(startIndex, endIndex).map(async id => {
               const event = await instance.getEvent(id);
-              const response = await this._requestFromIpfs(event[INDEX_IPFS_HASH]);
-              const eventIpfs = JSON.parse(response);              
+              const response = await this._requestFromIpfs(
+                event[INDEX_IPFS_HASH]
+              );
+              const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
-              eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
-              eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP])
+              eventIpfs.tickets = await Event._getTicketTypesForEvent(
+                instance,
+                id
+              );
+              eventIpfs.earnings = event[INDEX_EARNINGS];
+              eventIpfs.timestamp = convertTimestampToMillis(
+                event[INDEX_TIMESTAMP]
+              );
               events.push(eventIpfs);
             })
           );
@@ -100,6 +120,10 @@ class Event {
 
       return events;
     });
+  }
+
+  static async getAllForCreator(address) {
+    
   }
 
   static async getById(id) {
