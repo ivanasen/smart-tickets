@@ -31,7 +31,7 @@ contract SmartTickets is TicketAccessControl {
     }
     
     struct Event {
-        uint date;
+        uint timestamp;
         bytes metaDescriptionHash;
         uint earnings;
         uint8 cancelled;
@@ -138,7 +138,7 @@ contract SmartTickets is TicketAccessControl {
         Event storage forEvent = events[ticketType.eventId];
         
         require(ticketType.eventId != 0);
-        require(events[ticketType.eventId].date > now);
+        require(events[ticketType.eventId].timestamp > now);
         require(ticketType.currentSupply > 0);
         require(msg.value ==
             ticketType.priceInUSDCents * fiatContract.USD(FIAT_ETH_INDEX));
@@ -157,7 +157,7 @@ contract SmartTickets is TicketAccessControl {
         emit TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
     
-    function createEvent(uint _date,
+    function createEvent(uint _timestamp,
         bytes _metaDescriptionHash,
         uint[] _ticketPricesInUSDCents,
         uint[] _ticketSupplies,
@@ -165,13 +165,13 @@ contract SmartTickets is TicketAccessControl {
         external
         onlyAdminOrAbove
     {
-        require(_date > now);
+        require(_timestamp > now);
         require(_ticketPricesInUSDCents.length > 0 &&
             _ticketPricesInUSDCents.length == _ticketSupplies.length &&
             _ticketPricesInUSDCents.length == _ticketRefundables.length);
         
         Event memory newEvent = Event(
-            _date,
+            _timestamp,
             _metaDescriptionHash,
             0,
             0,
@@ -181,7 +181,7 @@ contract SmartTickets is TicketAccessControl {
         eventIdToCreator[newEventId] = msg.sender;
         creatorEventCount[msg.sender] = creatorEventCount[msg.sender].add(1);
         
-        emit EventCreation(newEventId, _date, _metaDescriptionHash, msg.sender);
+        emit EventCreation(newEventId, _timestamp, _metaDescriptionHash, msg.sender);
         
         for (uint i = 0; i < _ticketPricesInUSDCents.length; i++) {
             addTicketForEvent(
@@ -245,7 +245,7 @@ contract SmartTickets is TicketAccessControl {
     
     function cancelEvent(uint _eventId) external validCreatorOfEvent(_eventId) {
         Event storage eventToCancel = events[_eventId];
-        require(eventToCancel.date > now);
+        require(eventToCancel.timestamp > now);
         eventToCancel.cancelled = 1;
         emit EventCancelation(_eventId);
     }
@@ -255,7 +255,7 @@ contract SmartTickets is TicketAccessControl {
         validCreatorOfEvent(_eventId)
     {
         Event storage pastEvent = events[_eventId];
-        require(pastEvent.date > now);
+        require(pastEvent.timestamp > now);
         require(pastEvent.earnings > 0);
         
         uint earnings = pastEvent.earnings;
@@ -265,12 +265,12 @@ contract SmartTickets is TicketAccessControl {
         emit Withdrawal(msg.sender, earnings);
     }
     
-    function changeEventDate(uint _id, uint _date)
+    function changeEventDate(uint _id, uint _timestamp)
         external
         validCreatorOfEvent(_id)
     {
-        require(_date > now);
-        events[_id].date = _date;
+        require(_timestamp > now);
+        events[_id].timestamp = _timestamp;
     }
     
     function changeEventMetaDescriptionHash(uint _id, bytes _hash)
@@ -312,7 +312,7 @@ contract SmartTickets is TicketAccessControl {
         external
         payable {
         Event storage forEvent = events[_eventId];
-        require(forEvent.cancelled == 0 || forEvent.date > now);
+        require(forEvent.cancelled == 0 || forEvent.timestamp > now);
         
         uint pricePerDay = promotionLevelPrices[uint8(_level)] 
             * fiatContract.USD(FIAT_ETH_INDEX);
@@ -355,7 +355,7 @@ contract SmartTickets is TicketAccessControl {
         external 
         view 
         returns(
-        uint date,
+        uint timestamp,
         bytes metaDescriptionHash,
         uint8 cancelled,
         uint ticketTypeCount,
@@ -366,7 +366,7 @@ contract SmartTickets is TicketAccessControl {
         require(eventIdToCreator[_eventId] != address(0));
         
         Event storage searchedEvent = events[_eventId];
-        date = searchedEvent.date;
+        timestamp = searchedEvent.timestamp;
         metaDescriptionHash = searchedEvent.metaDescriptionHash;
         cancelled = searchedEvent.cancelled;
         ticketTypeCount = eventToTicketType[_eventId].length;
@@ -431,8 +431,6 @@ contract SmartTickets is TicketAccessControl {
         public
         view
         returns (bool) {
-        require(msg.sender != address(0));
-        
         bool isSigned = _isSigned(_addr, _ticketIdHash, _v, _r, _s);
         bool validOwner = ticketOwner[_ticketId] == _addr;
         return isSigned && validOwner;
