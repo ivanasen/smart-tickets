@@ -28,7 +28,7 @@ class TxHistoryController {
               instance,
               tx.value
             );
-            tx.timestamp = convertTimestampToMillis(tx.timestamp);
+            tx.timeStamp = convertTimestampToMillis(tx.timeStamp);
 
             return tx;
           })
