@@ -1,10 +1,8 @@
 const web3 = require('../config/web3').instance;
-const {
-  ropstenEtherscanApiKey,
-  ropstenEtherscanBaseUrl
-} = require('../config/config.json');
+const { ropstenEtherscanApiKey, ropstenEtherscanBaseUrl } = require('../config/config.json');
 const fetch = require('node-fetch');
 const contract = require('../config/smart-tickets');
+const { convertTimestampToMillis } = require('../utils/util');
 
 class TxHistoryController {
   static async index(req, res) {
@@ -30,6 +28,8 @@ class TxHistoryController {
               instance,
               tx.value
             );
+            tx.timestamp = convertTimestampToMillis(tx.timestamp);
+
             return tx;
           })
         );
