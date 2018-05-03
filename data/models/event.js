@@ -4,8 +4,10 @@ const request = require('request-promise-native');
 const _ = require('lodash');
 const contract = require('../../config/smart-tickets');
 const config = require('../../config/config.json');
+const { convertTimestampToMillis } = require('../../utils/util');
 
-const INDEX_ID = 1;
+const INDEX_TIMESTAMP = 0;
+const INDEX_IPFS_HASH = 1;
 const INDEX_PROMOTION_LEVEL = 5;
 
 const ORDER_TYPES = {
@@ -41,10 +43,12 @@ class Event {
           await Promise.all(
             _.range(startIndex, endIndex).map(async i => {
               const event = eventsContract[i];
-              const response = await this._requestFromIpfs(event[INDEX_ID]);
+              const response = await this._requestFromIpfs(event[INDEX_IPFS_HASH]);
               const eventIpfs = JSON.parse(response);
+
               eventIpfs.eventId = event.eventId;
               eventIpfs.tickets = event.ticketTypes;
+              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
               events.push(eventIpfs);
             })
           );
@@ -63,11 +67,12 @@ class Event {
             _.range(startIndex, endIndex).map(async id => {
               const event = await instance.getEvent(id);
               const response = await this._requestFromIpfs(
-                event[INDEX_EVENT_ID]
+                event[INDEX_IPFS_HASH]
               );
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
               eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
+              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
               events.push(eventIpfs);
             })
           );
@@ -81,10 +86,11 @@ class Event {
           await Promise.all(
             _.rangeRight(startIndex, endIndex).map(async id => {
               const event = await instance.getEvent(id);
-              const response = await this._requestFromIpfs(event[INDEX_ID]);
+              const response = await this._requestFromIpfs(event[INDEX_IPFS_HASH]);
               const eventIpfs = JSON.parse(response);              
               eventIpfs.eventId = id;
               eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
+              eventIpfs.timestamp = convertTimestampToMillis(event.timestamp)
               events.push(eventIpfs);
             })
           );
