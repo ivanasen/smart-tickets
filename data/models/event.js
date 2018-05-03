@@ -67,7 +67,7 @@ class Event {
               );
               const eventIpfs = JSON.parse(response);
               eventIpfs.eventId = id;
-              eventIpfs.ticketTypes = await Event._getTicketTypesForEvent(instance, id);
+              eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
               events.push(eventIpfs);
             })
           );
@@ -84,7 +84,7 @@ class Event {
               const response = await this._requestFromIpfs(event[INDEX_ID]);
               const eventIpfs = JSON.parse(response);              
               eventIpfs.eventId = id;
-              eventIpfs.ticketTypes = await Event._getTicketTypesForEvent(instance, id);
+              eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
               events.push(eventIpfs);
             })
           );
