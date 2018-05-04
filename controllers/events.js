@@ -1,4 +1,5 @@
 const { Event, ORDER_TYPES } = require('../data/models/event');
+const web3 = require('../config/web3').instance;
 
 const DEFAULT_PAGE_INDEX = 0;
 const DEFAULT_PAGE_LIMIT = 10;
@@ -14,8 +15,13 @@ class EventController {
     if (isNaN(page) || page < 0) {
       res.status(400).send('Invalid page index');
     } else if (creatorAddress) {
-      const events = await Event.getAllForCreator(creatorAddress);
-      res.send(events);
+      if (web3.utils.isAddress(creatorAddress)) {
+        const events = await Event.getAllForCreator(creatorAddress);
+        res.send(events);
+      } else {
+        res.status(400).send('Invalid Address')
+      }    
+
     } else {
       const events = await Event.getAll(page, limit, order);
       res.send(events);
