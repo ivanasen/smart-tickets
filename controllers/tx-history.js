@@ -1,5 +1,8 @@
 const web3 = require('../config/web3').instance;
-const { ropstenEtherscanApiKey, ropstenEtherscanBaseUrl } = require('../config/config.json');
+const {
+  ropstenEtherscanApiKey,
+  ropstenEtherscanBaseUrl
+} = require('../config/config.json');
 const fetch = require('node-fetch');
 const contract = require('../config/smart-tickets');
 const { convertTimestampToMillis } = require('../utils/util');

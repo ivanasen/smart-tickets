@@ -17,6 +17,11 @@ const ORDER_TYPES = {
   popular: 'popular'
 };
 class Event {
+  // TODO: convert to OOP aproach
+  // constructor() {
+
+  // }
+
   static async getAll(pageIndex, limit, order) {
     return await contract.deployed().then(async instance => {
       const eventCount = await instance.getEventCount.call();
@@ -126,10 +131,18 @@ class Event {
     
   }
 
-  static async getById(id) {
-    const event = await instance.getEvent([i]);
-    const eventIpfs = JSON.parse(await this._requestFromIpfs(event[1]));
+  static async getById(id, contract) {
+    const event = await contract.getEvent([id]);
+    const eventIpfs = JSON.parse(await Event._requestFromIpfs(event[INDEX_IPFS_HASH]));
     eventIpfs.eventId = id;
+    eventIpfs.timestamp = convertTimestampToMillis(
+      event[INDEX_TIMESTAMP]
+    );
+    eventIpfs.tickets = await Event._getTicketTypesForEvent(
+      contract,
+      id
+    );
+    eventIpfs.earnings = event[INDEX_EARNINGS];
 
     return eventIpfs;
   }
