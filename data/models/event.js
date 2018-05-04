@@ -128,20 +128,28 @@ class Event {
   }
 
   static async getAllForCreator(address) {
-    
+    return await contract.deployed().then(async instance => {
+      const eventIds = await instance.getEventIdsForCreator(address);
+
+      if (!eventIds || eventIds.length == 0) {
+        return [];
+      }
+
+      const events = await Promise.all(eventIds.map(async id => {
+        return await Event.getById(id, instance);
+      }));
+      return events;
+    });
   }
 
   static async getById(id, contract) {
     const event = await contract.getEvent([id]);
-    const eventIpfs = JSON.parse(await Event._requestFromIpfs(event[INDEX_IPFS_HASH]));
+    const eventIpfs = JSON.parse(
+      await Event._requestFromIpfs(event[INDEX_IPFS_HASH])
+    );
     eventIpfs.eventId = id;
-    eventIpfs.timestamp = convertTimestampToMillis(
-      event[INDEX_TIMESTAMP]
-    );
-    eventIpfs.tickets = await Event._getTicketTypesForEvent(
-      contract,
-      id
-    );
+    eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
+    eventIpfs.tickets = await Event._getTicketTypesForEvent(contract, id);
     eventIpfs.earnings = event[INDEX_EARNINGS];
 
     return eventIpfs;
