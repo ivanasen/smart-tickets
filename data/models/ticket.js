@@ -42,11 +42,10 @@ class Ticket {
       const ticketIds = await instance.getTicketsForOwner(address);
 
       const tickets = await Promise.all(
-        ticketIds.map(async id => {
-          const ticketType = await Ticket._getTicketTypeForTicket(id, instance);
-          const event = await Event.getById(ticketType.eventId, instance);
-
-          return new Ticket(id, ticketType, event);
+        ticketIds.filter(id => id != 0).map(async id => {          
+            const ticketType = await Ticket._getTicketTypeForTicket(id, instance);
+            const event = await Event.getById(ticketType.eventId, instance);
+            return new Ticket(id, ticketType, event);          
         })
       );
 

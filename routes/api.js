@@ -9,4 +9,8 @@ router.route('/history').get(TxHistoryController.index);
 
 router.route('/tickets').get(TicketsController.index);
 
+router.route('/').all((req, res) => {
+  res.status(404).send();
+});
+
 module.exports = router;
