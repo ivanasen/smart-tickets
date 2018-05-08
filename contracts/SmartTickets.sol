@@ -58,6 +58,7 @@ contract SmartTickets is TicketAccessControl {
     mapping (uint => address) ticketOwner;
     mapping (address => uint[]) private ownedTickets;
     mapping (uint => uint) private ownedTicketsIndex;
+    mapping (uint => uint) private ticketToStoredValue;
     
     
     modifier onlyOwnerOf(uint _ticketId) {
@@ -146,15 +147,15 @@ contract SmartTickets is TicketAccessControl {
         
         forEvent.earnings = forEvent.earnings.add(msg.value);
         ticketType.currentSupply = ticketType.currentSupply.sub(1);
+        ticketToStoredValue[currentTicketIdIndex] = msg.value;
         
         ticketOwner[currentTicketIdIndex] = msg.sender;
         ticketToTicketType[currentTicketIdIndex] = _ticketTypeId;
         uint length = balanceOf(msg.sender);
         ownedTickets[msg.sender].push(currentTicketIdIndex);
         ownedTicketsIndex[currentTicketIdIndex] = length;
-        
+        emit TicketPurchase(currentTicketIdIndex, msg.sender);
         currentTicketIdIndex = currentTicketIdIndex.add(1);
-        emit TicketPurchase(currentTicketIdIndex - 1, msg.sender);
     }
     
     function createEvent(uint _timestamp,
@@ -230,7 +231,11 @@ contract SmartTickets is TicketAccessControl {
             ticketTypes[ticketToTicketType[_ticketId]];
         Event storage forEvent = events[ticketType.eventId];
         
-        require(forEvent.cancelled == 1 || ticketType.refundable == 1);
+        require(
+            ticketToStoredValue[_ticketId] > 0 && 
+            forEvent.cancelled == 1 ||
+            ticketType.refundable == 1
+        );
         
         ticketType.currentSupply = ticketType.currentSupply.add(1);
         forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
@@ -238,8 +243,10 @@ contract SmartTickets is TicketAccessControl {
         ticketOwner[_ticketId] = address(0);
         ownedTickets[msg.sender][ownedTicketsIndex[_ticketId]] = 0;
         ownedTicketsIndex[_ticketId] = 0;
+        uint refundValue = ticketToStoredValue[_ticketId];
+        ticketToStoredValue[_ticketId] = 0;
         
-        msg.sender.transfer(ticketType.priceInUSDCents * fiatContract.USD(0));
+        msg.sender.transfer(refundValue);
         emit TicketRefund(_ticketId, msg.sender, ticketType.eventId);
     }
     
@@ -349,6 +356,16 @@ contract SmartTickets is TicketAccessControl {
         initialSupply = ticketType.initialSupply;
         currentSupply = ticketType.currentSupply;
         refundable = ticketType.refundable;
+    }
+    
+    function getTicketRefundValue(uint _ticketId)
+        external
+        view
+        returns(uint) {
+        TicketType storage ticketType = 
+            ticketTypes[ticketToTicketType[_ticketId]];
+        require(ticketType.refundable == 1);
+        return ticketToStoredValue[_ticketId];
     }
     
     function getEvent(uint _eventId) 
