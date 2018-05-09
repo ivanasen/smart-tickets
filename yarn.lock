@@ -2,6 +2,22 @@
 # yarn lockfile v1
 
 
+"@newrelic/koa@^1.0.0":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@newrelic/koa/-/koa-1.0.5.tgz#76ca506c956b6f6599d866a7a725b573fde2fe1a"
+  dependencies:
+    methods "^1.1.2"
+
+"@newrelic/native-metrics@^2.1.0":
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/@newrelic/native-metrics/-/native-metrics-2.4.0.tgz#65503820f1fc6afc215cd9893077848a6c013cae"
+  dependencies:
+    nan "^2.8.0"
+
+"@tyriar/fibonacci-heap@^2.0.7":
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/@tyriar/fibonacci-heap/-/fibonacci-heap-2.0.7.tgz#73a441ca0e5108d2621c72e9b34dcf566387f078"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -28,6 +44,12 @@ accepts@~1.3.5:
 aes-js@^0.2.3:
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/aes-js/-/aes-js-0.2.4.tgz#94b881ab717286d015fa219e08fb66709dda5a3d"
+
+agent-base@^4.1.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/agent-base/-/agent-base-4.2.0.tgz#9838b5c3392b962bad031e6a4c5e1024abec45ce"
+  dependencies:
+    es6-promisify "^5.0.0"
 
 ajv@^5.1.0:
   version "5.5.2"
@@ -169,7 +191,7 @@ async@^1.4.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@^2.0.1, async@^2.1.2, async@^2.4.0:
+async@^2.0.1, async@^2.1.2, async@^2.1.4, async@^2.4.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.0.tgz#61a29abb6fcc026fea77e56d1c6ec53a795951f4"
   dependencies:
@@ -1038,6 +1060,10 @@ buffer-fill@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/buffer-fill/-/buffer-fill-0.1.1.tgz#76d825c4d6e50e06b7a31eb520c04d08cc235071"
 
+buffer-from@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.0.0.tgz#4cb8832d23612589b0406e9e2956c17f06fdf531"
+
 buffer-to-arraybuffer@^0.0.5:
   version "0.0.5"
   resolved "https://registry.yarnpkg.com/buffer-to-arraybuffer/-/buffer-to-arraybuffer-0.0.5.tgz#6064a40fa76eb43c723aba9ef8f6e1216d10511a"
@@ -1318,6 +1344,15 @@ component-emitter@^1.2.1:
 concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
+
+concat-stream@^1.5.0:
+  version "1.6.2"
+  resolved "https://registry.yarnpkg.com/concat-stream/-/concat-stream-1.6.2.tgz#904bdf194cd3122fc675c77fc4ac3d4ff0fd1a34"
+  dependencies:
+    buffer-from "^1.0.0"
+    inherits "^2.0.3"
+    readable-stream "^2.2.2"
+    typedarray "^0.0.6"
 
 configstore@^3.0.0:
   version "3.1.2"
@@ -1837,6 +1872,16 @@ es-to-primitive@^1.1.1:
     is-callable "^1.1.1"
     is-date-object "^1.0.1"
     is-symbol "^1.0.1"
+
+es6-promise@^4.0.3:
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/es6-promise/-/es6-promise-4.2.4.tgz#dc4221c2b16518760bd8c39a52d8f356fc00ed29"
+
+es6-promisify@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/es6-promisify/-/es6-promisify-5.0.0.tgz#5109d62f3e56ea967c4b63505aef08291c8a5203"
+  dependencies:
+    es6-promise "^4.0.3"
 
 escape-html@~1.0.3:
   version "1.0.3"
@@ -2673,6 +2718,13 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
+https-proxy-agent@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/https-proxy-agent/-/https-proxy-agent-2.2.1.tgz#51552970fa04d723e04c56d04178c3f92592bbc0"
+  dependencies:
+    agent-base "^4.1.0"
+    debug "^3.1.0"
+
 iconv-lite@0.4.19, iconv-lite@~0.4.13:
   version "0.4.19"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
@@ -3094,7 +3146,7 @@ json-schema@0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.2.3.tgz#b480c892e59a2f05954ce727bd3f2a4e882f9e13"
 
-json-stringify-safe@~5.0.1:
+json-stringify-safe@^5.0.0, json-stringify-safe@~5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
 
@@ -3366,7 +3418,7 @@ merkle-patricia-tree@^2.1.2:
     rlp "^2.0.0"
     semaphore ">=1.0.1"
 
-methods@~1.1.2:
+methods@^1.1.2, methods@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/methods/-/methods-1.1.2.tgz#5529a4d67654134edcc5266656835b0f851afcee"
 
@@ -3525,7 +3577,7 @@ nan@^2.0.5, nan@^2.0.8, nan@^2.2.1:
   version "2.9.2"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.9.2.tgz#f564d75f5f8f36a6d9456cca7a6c4fe488ab7866"
 
-nan@^2.3.3, nan@^2.9.2:
+nan@^2.3.3, nan@^2.8.0, nan@^2.9.2:
   version "2.10.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.10.0.tgz#96d0cd610ebd58d4b4de9cc0c6828cda99c7548f"
 
@@ -3561,6 +3613,21 @@ needle@^2.2.0:
 negotiator@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/negotiator/-/negotiator-0.6.1.tgz#2b327184e8992101177b28563fb5e7102acd0ca9"
+
+newrelic@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-4.1.0.tgz#7379c9c41f3ff5781f98d4f8dfa4d3be5c2d1129"
+  dependencies:
+    "@newrelic/koa" "^1.0.0"
+    "@tyriar/fibonacci-heap" "^2.0.7"
+    async "^2.1.4"
+    concat-stream "^1.5.0"
+    https-proxy-agent "^2.2.1"
+    json-stringify-safe "^5.0.0"
+    readable-stream "^2.1.4"
+    semver "^5.3.0"
+  optionalDependencies:
+    "@newrelic/native-metrics" "^2.1.0"
 
 nocache@2.0.0:
   version "2.0.0"
@@ -4352,7 +4419,7 @@ readable-stream@^2.0.0:
     string_decoder "~1.0.3"
     util-deprecate "~1.0.1"
 
-readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.3.5:
+readable-stream@^2.0.2, readable-stream@^2.0.6, readable-stream@^2.1.4, readable-stream@^2.2.2, readable-stream@^2.3.5:
   version "2.3.6"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.3.6.tgz#b11c27d88b8ff1fbe070643cf94b0c79ae1b0aaf"
   dependencies:
@@ -5286,6 +5353,10 @@ typedarray-to-buffer@^3.1.2:
   resolved "https://registry.yarnpkg.com/typedarray-to-buffer/-/typedarray-to-buffer-3.1.5.tgz#a97ee7a9ff42691b9f783ff1bc5112fe3fca9080"
   dependencies:
     is-typedarray "^1.0.0"
+
+typedarray@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
 ultron@~1.1.0:
   version "1.1.1"
