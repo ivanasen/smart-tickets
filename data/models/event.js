@@ -36,7 +36,7 @@ class Event {
               // Start at index 1 since at index 0 is the genesis event
               _.range(1, eventCount.add(1)).map(async id => event = Event._getEvent(instance, id)).filter(event => {
                 const dateNowSeconds = Date.now() / 1000 * 1000;
-                if (event[INDEX_TIMESTAMP] > dateNowSeconds && event[INDEX_CANCELLED] == 0) {
+                if (event[INDEX_TIMESTAMP] > dateNowSeconds && event[INDEX_CANCELLED].toNumber() == 0) {
                   return event;
                 }
               }));
@@ -58,7 +58,7 @@ class Event {
                 eventIpfs.tickets = event.ticketTypes;
                 eventIpfs.earnings = event[INDEX_EARNINGS];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
-                if (eventIpfs.timestamp > Date.now() / 1000 && eventIpfs[INDEX_CANCELLED] == 0) {
+                if (eventIpfs.timestamp > Date.now() / 1000 && event[INDEX_CANCELLED].toNumber() == 0) {
                   events.push(eventIpfs);
                 }
               }));
@@ -100,7 +100,7 @@ class Event {
                 eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
                 eventIpfs.earnings = event[INDEX_EARNINGS];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
-                if (eventIpfs.timestamp > Date.now() / 1000 && eventIpfs[INDEX_CANCELLED] == 0) {
+                if (eventIpfs.timestamp > Date.now() / 1000 && event[INDEX_CANCELLED].toNumber() === 0) {
                   events.push(eventIpfs);
                 }
               }));
