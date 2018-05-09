@@ -18,8 +18,6 @@ const ORDER_TYPES = {
   popular: 'popular'
 };
 class Event {
-  // TODO: convert to OOP aproach constructor() { }
-
   static async getAll(pageIndex, limit, order) {
     return await contract
       .deployed()
@@ -57,6 +55,7 @@ class Event {
                 eventIpfs.eventId = event.eventId;
                 eventIpfs.tickets = event.ticketTypes;
                 eventIpfs.earnings = event[INDEX_EARNINGS];
+                eventIpfs.cancelled = event[INDEX_CANCELLED];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
                 if (eventIpfs.timestamp > Date.now() / 1000 && event[INDEX_CANCELLED].toNumber() == 0) {
                   events.push(eventIpfs);
@@ -80,6 +79,7 @@ class Event {
                 const eventIpfs = JSON.parse(response);
                 eventIpfs.eventId = id;
                 eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
+                eventIpfs.cancelled = event[INDEX_CANCELLED];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
                 eventIpfs.earnings = event[INDEX_EARNINGS];
                 events.push(eventIpfs);
@@ -99,6 +99,7 @@ class Event {
                 eventIpfs.eventId = id;
                 eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, id);
                 eventIpfs.earnings = event[INDEX_EARNINGS];
+                eventIpfs.cancelled = event[INDEX_CANCELLED];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
                 if (eventIpfs.timestamp > Date.now() / 1000 && event[INDEX_CANCELLED].toNumber() === 0) {
                   events.push(eventIpfs);
