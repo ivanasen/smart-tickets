@@ -4,7 +4,9 @@ const request = require('request-promise-native');
 const _ = require('lodash');
 const contract = require('../../config/smart-tickets');
 const config = require('../../config/config.json');
-const {convertTimestampToMillis} = require('../../utils/util');
+const {
+  convertTimestampToMillis
+} = require('../../utils/util');
 
 const INDEX_TIMESTAMP = 0;
 const INDEX_IPFS_HASH = 1;
@@ -30,14 +32,18 @@ class Event {
         switch (order) {
           case ORDER_TYPES.popular:
             {
-              const eventsContract = await Promise.all(
-              // Start at index 1 since at index 0 is the genesis event
-              _.range(1, eventCount.add(1)).map(async id => event = Event._getEvent(instance, id)).filter(event => {
+              const allEvents = await Promise.all(
+                // Start at index 1 since at index 0 is the genesis event
+                _.range(1, eventCount.add(1))
+                .map(async id => await Event._getEvent(instance, id))
+              );
+
+              const eventsContract = allEvents.filter(async event => {
                 const dateNowSeconds = Date.now() / 1000 * 1000;
                 if (event[INDEX_TIMESTAMP] > dateNowSeconds && event[INDEX_CANCELLED].toNumber() == 0) {
                   return event;
                 }
-              }));
+              });
 
               eventsContract.sort((a, b) => b[INDEX_PROMOTION_LEVEL] - a[INDEX_PROMOTION_LEVEL]);
 
@@ -53,7 +59,7 @@ class Event {
                 const eventIpfs = JSON.parse(response);
 
                 eventIpfs.eventId = event.eventId;
-                eventIpfs.tickets = event.ticketTypes;
+                eventIpfs.tickets = await Event._getTicketTypesForEvent(instance, event.eventId);
                 eventIpfs.earnings = event[INDEX_EARNINGS];
                 eventIpfs.cancelled = event[INDEX_CANCELLED];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
@@ -82,7 +88,9 @@ class Event {
                 eventIpfs.cancelled = event[INDEX_CANCELLED];
                 eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
                 eventIpfs.earnings = event[INDEX_EARNINGS];
-                events.push(eventIpfs);
+                if (eventIpfs.timestamp > Date.now() / 1000 && event[INDEX_CANCELLED].toNumber() === 0) {
+                  events.push(eventIpfs);
+                }
               }));
               break;
             }
