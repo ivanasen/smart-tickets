@@ -135,6 +135,7 @@ class Event {
     const eventIpfs = JSON.parse(await Event._requestFromIpfs(event[INDEX_IPFS_HASH]));
     eventIpfs.eventId = id;
     eventIpfs.timestamp = convertTimestampToMillis(event[INDEX_TIMESTAMP]);
+    eventIpfs.cancelled = event[INDEX_CANCELLED];
     eventIpfs.tickets = await Event._getTicketTypesForEvent(contract, id);
     eventIpfs.earnings = event[INDEX_EARNINGS];
 
