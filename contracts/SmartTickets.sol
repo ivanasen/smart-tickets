@@ -237,14 +237,15 @@ contract SmartTickets is TicketAccessControl {
             ticketType.refundable == 1
         );
         
+        uint refundValue = ticketToStoredValue[_ticketId];
+        ticketToStoredValue[_ticketId] = 0;
+
         ticketType.currentSupply = ticketType.currentSupply.add(1);
-        forEvent.earnings = forEvent.earnings.sub(ticketType.priceInUSDCents);
-        
+        forEvent.earnings = forEvent.earnings.sub(refundValue);        
         ticketOwner[_ticketId] = address(0);
         ownedTickets[msg.sender][ownedTicketsIndex[_ticketId]] = 0;
         ownedTicketsIndex[_ticketId] = 0;
-        uint refundValue = ticketToStoredValue[_ticketId];
-        ticketToStoredValue[_ticketId] = 0;
+        
         
         msg.sender.transfer(refundValue);
         emit TicketRefund(_ticketId, msg.sender, ticketType.eventId);
