@@ -125,14 +125,14 @@ class Event {
     return await contract
       .deployed()
       .then(async instance => {
-        const eventIds = await instance.getEventIdsForCreator(address)
-          .reverse(); //Return newest events first
+        const eventIds = await instance.getEventIdsForCreator(address)          
 
         if (!eventIds || eventIds.length == 0) {
           return [];
         }
 
-        const events = await Promise.all(eventIds.map(async id => {
+        const eventIdsReversed = eventIds.reverse(); //Return newest events first
+        const events = await Promise.all(eventIdsReversed.map(async id => {
           return await Event.getById(id, instance);
         }));
         return events;
