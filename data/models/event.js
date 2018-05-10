@@ -125,7 +125,8 @@ class Event {
     return await contract
       .deployed()
       .then(async instance => {
-        const eventIds = await instance.getEventIdsForCreator(address);
+        const eventIds = await instance.getEventIdsForCreator(address)
+          .reverse(); //Return newest events first
 
         if (!eventIds || eventIds.length == 0) {
           return [];
